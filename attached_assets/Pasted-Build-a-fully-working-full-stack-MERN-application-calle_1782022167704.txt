@@ -1,0 +1,136 @@
+Build a fully working full-stack MERN application called:
+🏠 HouseHunt - House Rent Management System
+🚀 GOAL
+Create a production-ready rental property web app where:
+Renters can browse and book properties
+Owners can add, edit, and manage properties
+Admin can manage users, approve owners, and monitor the system
+The app must be fully functional with working frontend + backend + database integration.
+🧱 TECH STACK (MANDATORY)
+Frontend: React (Vite), React Router, Axios, Bootstrap
+Backend: Node.js, Express.js
+Database: MongoDB + Mongoose
+Authentication: JWT + bcryptjs
+Styling: Bootstrap (responsive design)
+👥 USER ROLES (ROLE-BASED ACCESS)
+🔴 Admin
+View all users
+Approve owner accounts
+View all properties
+View all bookings
+🟢 Owner
+Register/Login
+Add new property
+Edit/Delete own properties
+View bookings for their properties
+🔵 Renter
+Register/Login
+Browse properties
+Filter by location, price, type
+Book properties
+View booking history
+🗄️ DATABASE MODELS (MUST IMPLEMENT)
+User Model
+name
+email
+password (hashed using bcrypt)
+role (admin / owner / renter)
+isApproved (for owners)
+Property Model
+title
+description
+location
+rent
+type
+amenities (array)
+images
+ownerId (reference to User)
+status (available/booked)
+Booking Model
+propertyId
+renterId
+startDate
+endDate
+status (pending/confirmed/cancelled)
+🔐 AUTHENTICATION (IMPORTANT)
+JWT authentication required
+Password hashing with bcryptjs
+Middleware for:
+verifyToken
+role-based authorization (admin/owner/renter)
+Protect all sensitive routes
+🌐 BACKEND (EXPRESS API)
+Auth Routes
+POST /api/auth/register
+POST /api/auth/login
+Property Routes
+GET /api/properties (public)
+POST /api/properties (owner only)
+PUT /api/properties/:id (owner only)
+DELETE /api/properties/:id (owner only)
+Booking Routes
+POST /api/bookings (renter only)
+GET /api/bookings/user
+GET /api/bookings/owner
+Admin Routes
+GET /api/admin/users
+PUT /api/admin/approve-owner
+GET /api/admin/properties
+🎨 FRONTEND (REACT PAGES)
+Common
+Home page (landing page)
+Login page
+Register page
+Renter Dashboard
+Property listing page
+Property details page
+Booking page
+Booking history page
+Owner Dashboard
+Dashboard home
+Add property form
+My properties page
+Booking requests page
+Admin Dashboard
+Admin home
+Manage users page
+Manage properties page
+Manage bookings page
+⚙️ REQUIRED FEATURES
+Fully responsive UI (mobile + desktop)
+Search & filter properties
+Protected routes based on role
+Form validation
+Error handling
+Clean MVC backend structure
+Proper API integration using Axios
+📁 PROJECT STRUCTURE
+Backend
+models/ routes/ controllers/ middleware/ config/ server.js
+Frontend
+src/pages/ src/components/ src/services/api.js src/context/AuthContext.js
+🌱 SEED DATA (IMPORTANT)
+Automatically create sample data:
+1 Admin user
+1 Owner user (approved)
+1 Renter user
+3–5 sample properties
+1–2 bookings
+🎯 FINAL OUTPUT REQUIREMENTS
+App runs without errors
+Frontend + backend fully connected
+MongoDB working properly
+JWT authentication working
+Clean UI using Bootstrap
+Ready to run using:
+npm install
+npm run dev (frontend)
+npm start / nodemon server.js (backend)
+⚡ VERY IMPORTANT
+No missing files
+No broken imports
+No dummy/unconnected UI
+Everything must be functional end-to-end
+💡 EXTRA REQUIREMENT
+Make UI modern, simple, and clean like a real startup SaaS product.
+I will give this

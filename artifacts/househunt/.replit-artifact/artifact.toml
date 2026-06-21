@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "HouseHunt"
+version = "1.0.0"
+id = "artifacts/househunt"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21747
+
+[services.development]
+run = "pnpm --filter @workspace/househunt run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/househunt", "run", "build" ]
+publicDir = "artifacts/househunt/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21747"
+BASE_PATH = "/"

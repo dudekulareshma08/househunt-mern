@@ -1,36 +1,62 @@
-# [Project name]
+# HouseHunt
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full-stack house rent management system with role-based access for admins, property owners, and renters.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/househunt run dev` — run the React frontend (port varies)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` — Postgres connection string, `SESSION_SECRET` — JWT signing secret
+
+## Seed Data
+
+Run seed to create demo accounts and 6 sample properties:
+```
+scripts/node_modules/.bin/tsx artifacts/api-server/src/seed.ts
+```
+
+Demo accounts:
+- admin@househunt.com / admin123
+- owner@househunt.com / owner123
+- renter@househunt.com / renter123
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
+- Frontend: React + Vite + TailwindCSS v4 + shadcn/ui (`artifacts/househunt`)
+- API: Express 5 (`artifacts/api-server`)
+- DB: PostgreSQL + Drizzle ORM (`lib/db`)
+- Auth: JWT via `SESSION_SECRET`, stored in `localStorage` as `hh_token`
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- API codegen: Orval (from OpenAPI spec in `lib/api-spec`)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — source-of-truth API contract
+- `lib/db/src/schema/` — Drizzle schema (users, properties, bookings)
+- `lib/api-zod/src/generated/api.ts` — generated Zod validators
+- `lib/api-client-react/src/generated/api.ts` — generated React Query hooks
+- `artifacts/api-server/src/routes/` — auth, properties, bookings, admin routes
+- `artifacts/househunt/src/pages/` — all frontend pages by role
+- `artifacts/api-server/src/seed.ts` — database seed script
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- JWT stored in localStorage (Bearer token, key `hh_token`). Custom fetch reads it automatically via `setAuthTokenGetter` in custom-fetch.ts.
+- Owner accounts require admin approval (`isApproved=false` by default). Admin and renter accounts are auto-approved.
+- `property.rent` stored as Postgres `numeric` string; parsed with `parseFloat()` before returning to clients.
+- OpenAPI body schemas use entity-named components (not operation-named) to avoid TypeScript TS2308 name collisions in generated code.
+- All routes are mounted under `/api` prefix by the shared reverse proxy.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Renters**: Browse/search/filter properties, view details, request bookings, track booking status
+- **Owners**: List and manage properties, review and approve/decline booking requests, view dashboard stats
+- **Admins**: Full platform oversight — approve owner accounts, view all users/properties/bookings
 
 ## User preferences
 
@@ -38,7 +64,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Do NOT run `pnpm dev` at workspace root — use workflows or `pnpm --filter` commands
+- After changing Orval config or OpenAPI spec, run `pnpm --filter @workspace/api-spec run codegen` before building
+- Properties endpoint in api-server uses raw SQL `ANY()` for bulk queries since Drizzle inList doesn't handle dynamic arrays well in this setup
 
 ## Pointers
 

@@ -3,13 +3,22 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: HouseHunt - House Rent Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: properties
+    description: Property operations
+  - name: bookings
+    description: Booking operations
+  - name: admin
+    description: Admin operations
+
 paths:
   /healthz:
     get:
@@ -24,7 +33,421 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error or email taken
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /properties:
+    get:
+      operationId: listProperties
+      tags: [properties]
+      summary: List properties (public, with filters)
+      parameters:
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: minRent
+          in: query
+          schema:
+            type: number
+        - name: maxRent
+          in: query
+          schema:
+            type: number
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of properties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Property"
+
+    post:
+      operationId: createProperty
+      tags: [properties]
+      summary: Create a property (owner only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyInput"
+      responses:
+        "201":
+          description: Property created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /properties/{id}:
+    get:
+      operationId: getProperty
+      tags: [properties]
+      summary: Get a single property
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Property details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+        "404":
+          description: Not found
+
+    put:
+      operationId: updateProperty
+      tags: [properties]
+      summary: Update a property (owner only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyUpdate"
+      responses:
+        "200":
+          description: Property updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Property"
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+    delete:
+      operationId: deleteProperty
+      tags: [properties]
+      summary: Delete a property (owner only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /properties/owner/mine:
+    get:
+      operationId: listMyProperties
+      tags: [properties]
+      summary: List current owner's properties
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Owner's properties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Property"
+
+  /bookings:
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Book a property (renter only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: Invalid dates or property unavailable
+        "401":
+          description: Unauthorized
+
+  /bookings/my:
+    get:
+      operationId: listMyBookings
+      tags: [bookings]
+      summary: Get bookings for the current renter
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Renter's bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /bookings/owner:
+    get:
+      operationId: listOwnerBookings
+      tags: [bookings]
+      summary: Get bookings for properties owned by current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Owner's bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}/status:
+    patch:
+      operationId: updateBookingStatus
+      tags: [bookings]
+      summary: Update booking status (owner or admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingStatusUpdate"
+      responses:
+        "200":
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /admin/users/{id}/approve:
+    patch:
+      operationId: adminApproveOwner
+      tags: [admin]
+      summary: Approve or reject an owner (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalUpdate"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+
+  /admin/properties:
+    get:
+      operationId: adminListProperties
+      tags: [admin]
+      summary: List all properties (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All properties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Property"
+
+  /admin/bookings:
+    get:
+      operationId: adminListBookings
+      tags: [admin]
+      summary: List all bookings (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /admin/stats:
+    get:
+      operationId: adminGetStats
+      tags: [admin]
+      summary: Get platform statistics (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Platform statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /stats/owner:
+    get:
+      operationId: getOwnerStats
+      tags: [properties]
+      summary: Get stats for current owner's dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Owner statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnerStats"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +457,243 @@ components:
       required:
         - status
 
+    User:
+      type: object
+      required: [id, name, email, role, isApproved, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, owner, renter]
+        isApproved:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    RegisterInput:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+          enum: [owner, renter]
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    Property:
+      type: object
+      required: [id, title, description, location, rent, type, status, ownerId, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        rent:
+          type: number
+        type:
+          type: string
+          enum: [apartment, house, villa, studio, commercial]
+        amenities:
+          type: array
+          items:
+            type: string
+        images:
+          type: array
+          items:
+            type: string
+        ownerId:
+          type: integer
+        ownerName:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [available, booked]
+        createdAt:
+          type: string
+          format: date-time
+
+    PropertyInput:
+      type: object
+      required: [title, description, location, rent, type]
+      properties:
+        title:
+          type: string
+          minLength: 3
+        description:
+          type: string
+        location:
+          type: string
+        rent:
+          type: number
+        type:
+          type: string
+          enum: [apartment, house, villa, studio, commercial]
+        amenities:
+          type: array
+          items:
+            type: string
+        images:
+          type: array
+          items:
+            type: string
+
+    PropertyUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        rent:
+          type: number
+        type:
+          type: string
+          enum: [apartment, house, villa, studio, commercial]
+        amenities:
+          type: array
+          items:
+            type: string
+        images:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [available, booked]
+
+    Booking:
+      type: object
+      required: [id, propertyId, renterId, startDate, endDate, status, createdAt]
+      properties:
+        id:
+          type: integer
+        propertyId:
+          type: integer
+        renterId:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+        propertyTitle:
+          type: ["string", "null"]
+        propertyLocation:
+          type: ["string", "null"]
+        propertyRent:
+          type: ["number", "null"]
+        renterName:
+          type: ["string", "null"]
+        renterEmail:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    BookingInput:
+      type: object
+      required: [propertyId, startDate, endDate]
+      properties:
+        propertyId:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    BookingStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+
+    ApprovalUpdate:
+      type: object
+      required: [isApproved]
+      properties:
+        isApproved:
+          type: boolean
+
+    AdminStats:
+      type: object
+      required: [totalUsers, totalOwners, totalRenters, totalProperties, totalBookings, pendingBookings, availableProperties, bookedProperties]
+      properties:
+        totalUsers:
+          type: integer
+        totalOwners:
+          type: integer
+        totalRenters:
+          type: integer
+        totalProperties:
+          type: integer
+        totalBookings:
+          type: integer
+        pendingBookings:
+          type: integer
+        availableProperties:
+          type: integer
+        bookedProperties:
+          type: integer
+
+    OwnerStats:
+      type: object
+      required: [totalProperties, availableProperties, bookedProperties, totalBookings, pendingBookings, confirmedBookings]
+      properties:
+        totalProperties:
+          type: integer
+        availableProperties:
+          type: integer
+        bookedProperties:
+          type: integer
+        totalBookings:
+          type: integer
+        pendingBookings:
+          type: integer
+        confirmedBookings:
+          type: integer
